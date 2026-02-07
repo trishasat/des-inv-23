@@ -20,7 +20,7 @@ const fonts = [
 let historyElements = [];
 
 function updatePoem(e) {
-    // Press Space to clear
+    //press space to clear existing languages
     if (e.code === "Space") {
         historyElements.forEach(el => el.remove());
         historyElements = [];
@@ -30,7 +30,7 @@ function updatePoem(e) {
     const container = document.getElementById('container');
     const mainDisplay = document.getElementById('main-display');
 
-    // Create the pink history word
+    //previous words viewed should be pink
     if (mainDisplay.innerText !== "START") {
         const historyWord = document.createElement('div');
         historyWord.className = 'history-word';
@@ -49,7 +49,7 @@ function updatePoem(e) {
         }
     }
 
-    // Change the main black word
+    //current word, with every click, is black
     const nextWord = words[Math.floor(Math.random() * words.length)];
     const randomFont = fonts[Math.floor(Math.random() * fonts.length)];
     
@@ -57,6 +57,6 @@ function updatePoem(e) {
     mainDisplay.style.fontFamily = randomFont;
 }
 
-// Ensure it reacts to both typing and clicking
+//type + click functionality 
 window.addEventListener('keydown', updatePoem);
 window.addEventListener('mousedown', updatePoem);
