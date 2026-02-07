@@ -1,0 +1,38 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: white;
+}
+
+#container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+.main-word {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12vw; /* Adjusted to fit the screen better */
+    font-weight: 900;
+    color: black;
+    z-index: 100;
+    text-align: center;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.history-word {
+    position: absolute;
+    font-size: 6vw;
+    font-weight: bold;
+    color: #ff69b4;
+    opacity: 0.5;
+    z-index: 10;
+    pointer-events: none;
+}
