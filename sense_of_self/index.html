@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <style>
+        body { margin: 0; background: #080808; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Georgia', serif; color: #d4d4d4; }
+        #ui { position: absolute; top: 15%; width: 100%; text-align: center; z-index: 10; pointer-events: none; }
+        #prompt { font-size: 20px; font-style: italic; opacity: 0; transition: opacity 1.5s; }
+        #snapBtn { position: absolute; bottom: 50px; background: none; border: 1px solid #444; color: #888; padding: 12px 24px; cursor: pointer; letter-spacing: 3px; transition: 0.5s; }
+        #snapBtn:hover { border-color: white; color: white; }
+    </style>
+</head>
+<body>
+    <div id="ui"><p id="prompt">Be still.</p></div>
+    <button id="snapBtn" onclick="initiate()">BEGIN REFLECTION</button>
+
+    <script>
+    let video, snapshot;
+    let pieces = [];
+    let isScattering = false;
+    let startTime;
+    let polySynth;
+    const duration = 60000;
+    const notes = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5']; //Scale
+
+    function setup() {
+        createCanvas(windowWidth, windowHeight);
+        video = createCapture(VIDEO);
+        video.size(640, 480);
+        video.hide();
+        polySynth = new p5.PolySynth();
+    }
+
+    function draw() {
+        background(8, 8, 8, 25); 
+
+        if (!isScattering) {
+            
+            //center video
+            push();
+            translate(width/2 - 320, height/2 - 240);
+            image(video, 0, 0);
+            pop();
+        } else {
+            let elapsed = millis() - startTime;
+            handlePrompts(elapsed);
+            
+            //randomize notes for sound
+            if (frameCount % 60 == 0 && elapsed < duration) {
+                let note = random(notes);
+                polySynth.play(note, 0.1, 0, 2);
+            }
+
+            //create and shatter pieces
+            for (let p of pieces) {
+                p.update();
+                p.display();
+            }
+
+            if (elapsed > duration) {
+                document.getElementById('prompt').innerText = "Presence is temporary.";
+            }
+        }
+    }
+
+    class Piece {
+        constructor(img, x, y, w, h) {
+            this.img = img;
+            this.x = x + (width/2 - 320);
+            this.y = y + (height/2 - 240);
+            this.w = w;
+            this.h = h;
+            this.vx = random(-1, 1); //X speed
+            this.vy = random(-1, 1); //Y speed
+            this.rot = 0;
+            this.rotV = random(-0.01, 0.01);
+            this.alpha = 255;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.rot += this.rotV;
+            this.alpha -= 0.08; //fade slowly
+        }
+        display() {
+            push();
+            translate(this.x + this.w/2, this.y + this.h/2);
+            rotate(this.rot);
+            tint(255, this.alpha);
+            image(this.img, -this.w/2, -this.h/2);
+            pop();
+        }
+    }
+
+    function handlePrompts(ms) {
+        let p = document.getElementById('prompt');
+        p.style.opacity = 1;
+        let sec = Math.floor(ms / 1000);
+        
+        if (sec == 0) p.innerText = "Notice the breath.";
+        if (sec == 10) p.innerText = "You are not your image.";
+        if (sec == 20) p.innerText = "The edges are softening.";
+        if (sec == 30) p.innerText = "Floating in the in-between.";
+        if (sec == 40) p.innerText = "Release the need to hold on.";
+        if (sec == 50) p.innerText = "Returning to the silence.";
+    }
+
+    function initiate() {
+        userStartAudio();
+        snapshot = video.get();
+        
+        //shatter photos into 10x10 grid 
+        let pw = 64;
+        let ph = 48;
+        for (let y = 0; y < 480; y += ph) {
+            for (let x = 0; x < 640; x += pw) {
+                let section = snapshot.get(x, y, pw, ph);
+                pieces.push(new Piece(section, x, y, pw, ph));
+            }
+        }
+        
+        startTime = millis();
+        isScattering = true;
+        document.getElementById('snapBtn').style.display = "none";
+    }
+    </script>
+</body>
+</html>
