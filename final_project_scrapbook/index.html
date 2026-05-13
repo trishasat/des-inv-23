@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Personal Map Scrapbook</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button id="connect-hw" onclick="initSerial()" class="nav-btn connect-pos">
+        Connect Controller 📍
+    </button>
+
+    <div id="map-view">
+        <img src="assets/map.jpg" id="background-map" alt="World Map">
+        <div id="pin-container"></div>
+        <button id="pin-spawner" class="nav-btn spawner-pos">Add Pin 📍</button>
+    </div>
+
+    <div id="scrapbook-view" class="hidden">
+        <div class="notebook-page">
+            <div class="top-nav">
+                <button class="nav-btn" onclick="showMapView()">← Return to Map</button>
+                <button class="delete-city-btn" onclick="deleteCurrentCity()">Delete City</button>
+            </div>
+            <h1 id="city-page-title" class="cursive"></h1>
+            <div id="scrapbook-workspace"></div>
+
+            <div class="scrapbook-tools">
+                <label for="imageInput" class="circle-btn">📷</label>
+                <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)" style="display:none">
+                <button class="circle-btn" onclick="addNewText()">✎</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="details-modal" class="hidden modal">
+        <div class="modal-content">
+            <h2 class="modal-title">Fill the city with all your memories:</h2>
+            <div class="input-group">
+                <input type="text" id="cityNameInput" placeholder="City Name">
+                <input type="text" id="dateInput" placeholder="Date">
+            </div>
+            <button class="nav-btn confirm-city-btn" onclick="saveCityPin()">Confirm City</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
