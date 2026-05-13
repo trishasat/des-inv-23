@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sound for Someone - Pulse Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            user-select: none;
+            overflow: hidden; /* Prevent scrollbars from p5 canvas */
+        }
+
+        /* canvas background behind everything*/
+        #defaultCanvas0 {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .wrapper { display: flex; align-items: flex-start; gap: 40px; position: relative; z-index: 1; }
+
+        .legend {
+            background: white; border: 5px solid black; border-radius: 15px;
+            padding: 20px; width: 220px; margin-top: 50px;
+        }
+        .legend h3 { margin-top: 0; font-size: 18px; border-bottom: 3px solid black; }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 13px; }
+        .dot { width: 15px; height: 15px; border: 2px solid black; border-radius: 3px; }
+
+        .controller-layout { display: flex; flex-direction: column; align-items: center; }
+        .record-bar { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        #rec-btn { padding: 8px 20px; background: white; border: 4px solid black; font-weight: 900; cursor: pointer; border-radius: 8px; }
+        #rec-btn.active { background: #ff4d4d; color: white; animation: blink 1s infinite; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /*create controller board*/
+        .controller-board {
+            background: white; border: 8px solid black; border-radius: 25px;
+            padding: 40px; width: 900px; display: grid;
+            grid-template-columns: 1fr 120px 1fr; gap: 20px;
+        }
+
+        .mixer-column { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+        .top-knobs { display: flex; flex-direction: column; gap: 10px; }
+        .knob { width: 50px; height: 30px; border: 4px solid black; border-radius: 6px; cursor: pointer; background: white; transition: background 0.1s; }
+
+        .fader-container { position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center; }
+        .fader-line { width: 5px; height: 160px; background: black; position: absolute; }
+        input[type=range].vertical-fader { appearance: none; background: transparent; width: 160px; height: 50px; cursor: pointer; transform: rotate(-90deg); z-index: 2; margin: 0; }
+        input[type=range].vertical-fader::-webkit-slider-thumb { appearance: none; height: 45px; width: 35px; background: #ffbd07; border: 4px solid black; border-radius: 4px; }
+
+        .deck { display: flex; flex-direction: column; align-items: center; gap: 25px; }
+        .display-screen { width: 200px; height: 60px; border: 5px solid black; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; text-align: center; background: white;}
+        .platter { width: 250px; height: 250px; border: 8px solid black; border-radius: 50%; cursor: pointer; background: white; display: flex; align-items: center; justify-content: center; transition: background 0.05s; }
+        .center-dot { width: 50px; height: 50px; background: white; border: 5px solid black; border-radius: 50%; }
+        .load-btn { font-size: 9px; cursor: pointer; }
+
+        /* colors, neon color palatte */
+        .flash-magenta { background: #ff00ff !important; }
+        .flash-cyan { background: #00ffff !important; }
+        .flash-red { background: #ff4d4d !important; }
+        .flash-green { background: #4dff88 !important; }
+        .flash-blue { background: #4db8ff !important; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="legend">
+        <h3>CONTROLS</h3>
+        <div class="legend-item"><div class="dot flash-magenta"></div> <span>Left Platter</span></div>
+        <div class="legend-item"><div class="dot flash-cyan"></div> <span>Right Platter</span></div>
+        <div class="legend-item"><div class="dot flash-red"></div> <span>Hi-Hat</span></div>
+        <div class="legend-item"><div class="dot flash-green"></div> <span>Lead 1</span></div>
+        <div class="legend-item"><div class="dot flash-blue"></div> <span>Lead 2</span></div>
+    </div>
+
+    <div class="controller-layout">
+        <div class="record-bar">
+            <button id="rec-btn">START 10s RECORDING</button>
+            <span id="timer">00:10</span>
+        </div>
+
+        <div class="controller-board">
+            <div class="deck">
+                <div class="display-screen" id="scr-l">LOAD MP3</div>
+                <div class="platter" id="plt-l"><div class="center-dot"></div></div>
+                <input type="file" id="file-l" class="load-btn" accept="audio/*">
+            </div>
+
+            <div class="mixer-column">
+                <div class="top-knobs">
+                    <div class="knob" id="k-red"></div>
+                    <div class="knob" id="k-green"></div>
+                    <div class="knob" id="k-blue"></div>
+                </div>
+                <div class="fader-container">
+                    <div class="fader-line"></div>
+                    <input type="range" min="0.5" max="2.0" step="0.01" value="1.0" class="vertical-fader" id="pitch-slider">
+                </div>
+                <div style="font-weight: 900; font-size: 11px;">SPEED</div>
+            </div>
+
+            <div class="deck">
+                <div class="display-screen" id="scr-r">LOAD MP3</div>
+                <div class="platter" id="plt-r"><div class="center-dot"></div></div>
+                <input type="file" id="file-r" class="load-btn" accept="audio/*">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    //background pulsing psj5
+    let bgColor;
+    let targetColor;
+
+    function setup() {
+        createCanvas(windowWidth, windowHeight);
+        bgColor = color(240); //default
+        targetColor = color(240);
+    }
+
+    function draw() {
+        //colors fade back to background with every click
+        bgColor = lerpColor(bgColor, targetColor, 0.05);
+        background(bgColor);
+    }
+
+    function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+    }
+
+    function triggerPulse(hex) {
+        bgColor = color(hex); //change color
+    }
+
+    //add audio files
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const dest = audioCtx.createMediaStreamDestination();
+    const pitchSlider = document.getElementById('pitch-slider');
+    let buffers = { l: null, r: null };
+    let activeSources = { l: null, r: null };
+
+    function setupLoader(inputId, key, scrId) {
+        document.getElementById(inputId).onchange = async (e) => {
+            const file = e.target.files[0];
+            const arr = await file.arrayBuffer();
+            buffers[key] = await audioCtx.decodeAudioData(arr);
+            document.getElementById(scrId).innerText = file.name.substring(0, 18);
+        };
+    }
+    setupLoader('file-l', 'l', 'scr-l');
+    setupLoader('file-r', 'r', 'scr-r');
+
+    function playDeck(key, el, colorClass, hex) {
+        if (!buffers[key]) return;
+        if (activeSources[key]) activeSources[key].stop();
+        
+        const src = audioCtx.createBufferSource();
+        src.buffer = buffers[key];
+        src.playbackRate.value = pitchSlider.value;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.5;
+        
+        src.connect(gain); gain.connect(audioCtx.destination); gain.connect(dest);
+        src.start(0);
+        activeSources[key] = src;
+        
+        //show color on click 
+        el.classList.add(colorClass);
+        setTimeout(() => el.classList.remove(colorClass), 200);
+        triggerPulse(hex); // Trigger background pulse
+    }
+
+    document.getElementById('plt-l').onmousedown = () => playDeck('l', document.getElementById('plt-l'), 'flash-magenta', '#ff00ff');
+    document.getElementById('plt-r').onmousedown = () => playDeck('r', document.getElementById('plt-r'), 'flash-cyan', '#00ffff');
+
+    function playKnob(el, colorClass, hex, mod) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.frequency.value = 440 * mod * pitchSlider.value;
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+        osc.connect(g); g.connect(audioCtx.destination); g.connect(dest);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        
+        el.classList.add(colorClass);
+        setTimeout(() => el.classList.remove(colorClass), 150);
+        triggerPulse(hex); // Trigger background pulse
+    }
+
+    const kr = document.getElementById('k-red'), kg = document.getElementById('k-green'), kb = document.getElementById('k-blue');
+    kr.onmousedown = () => playKnob(kr, 'flash-red', '#ff4d4d', 2);
+    kg.onmousedown = () => playKnob(kg, 'flash-green', '#4dff88', 1.5);
+    kb.onmousedown = () => playKnob(kb, 'flash-blue', '#4db8ff', 0.5);
+
+    //record sound for 10 seconds
+    const recBtn = document.getElementById('rec-btn');
+    const mediaRecorder = new MediaRecorder(dest.stream);
+    let chunks = [];
+    recBtn.onclick = () => {
+        chunks = []; mediaRecorder.start();
+        recBtn.innerText = "RECORDING..."; recBtn.classList.add('active');
+        let t = 10;
+        const intv = setInterval(() => {
+            t--; document.getElementById('timer').innerText = `00:0${t}`;
+            if (t <= 0) { 
+                clearInterval(intv); mediaRecorder.stop();
+                recBtn.innerText = "START 10s RECORDING"; recBtn.classList.remove('active');
+                document.getElementById('timer').innerText = "00:10";
+            }
+        }, 1000);
+    };
+    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+    mediaRecorder.onstop = () => {
+        const b = new Blob(chunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(b);
+        const a = document.createElement('a'); a.href = url; a.download = 'SoundForSomeone_Mix.webm'; a.click();
+    };
+</script>
+</body>
+</html>
