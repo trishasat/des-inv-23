@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Xylophone</title>
+    <style>
+        body { 
+            display: flex; flex-direction: column; align-items: center; 
+            background: #fdfdfd; font-family: 'Helvetica', sans-serif; 
+        }
+        #container { position: relative; width: 800px; margin-top: 20px; }
+        img { width: 100%; display: block; }
+        svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        /* transparent clickable keys */
+        .key { cursor: pointer; fill: rgba(255, 255, 255, 0); transition: fill 0.1s; }
+        .key:active { fill: rgba(255, 255, 255, 0.3); }
+
+        button { 
+            padding: 10px 20px; margin: 20px; font-size: 16px; 
+            cursor: pointer; border-radius: 20px; border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="connectBtn">Connect to Arduino</button>
+
+    <div id="container">
+        <img src="xylo.jpg" alt="Xylophone">
+        <svg viewBox="0 0 1000 750">
+            <!-- Red Key -->
+            <rect class="key" x="150" y="80" width="130" height="850" onclick="playKey(0, 261.63)"/>
+            <!-- Orange Key -->
+            <rect class="key" x="320" y="110" width="110" height="780" onclick="playKey(1, 293.66)"/>
+            <!-- Yellow Key -->
+            <rect class="key" x="480" y="150" width="90" height="700" onclick="playKey(2, 329.63)"/>
+            <!-- Green Key -->
+            <rect class="key" x="610" y="180" width="90" height="630" onclick="playKey(3, 349.23)"/>
+            <!-- Blue Key -->
+            <rect class="key" x="735" y="200" width="90" height="580" onclick="playKey(4, 392.00)"/>
+        </svg>
+    </div>
+
+    <script>
+        let port;
+        let writer;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        //connect to Arduino via Serial
+        document.getElementById('connectBtn').onclick = async () => {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 9600 });
+            writer = port.writable.getWriter();
+            document.getElementById('connectBtn').innerText = "Connected!";
+        };
+
+        async function playKey(id, frequency) {
+            //play Sound
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'triangle'; 
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+
+            //send ID to Arduino
+            if (writer) {
+                const data = new Uint8Array([id]);
+                await writer.write(data);
+            }
+        }
+    </script>
+</body>
+</html>
